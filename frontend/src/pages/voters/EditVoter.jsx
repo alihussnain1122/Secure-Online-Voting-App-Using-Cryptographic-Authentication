@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import { FaUserEdit, FaHome, FaSignOutAlt, FaIdCard, FaUser, FaPhone, FaCity, FaSearch } from 'react-icons/fa';
 
 const EditVoter = () => {
   const [form, setForm] = useState({
@@ -10,9 +12,11 @@ const EditVoter = () => {
     city: ''
   });
 
-  const [error, setError] = useState('');
   const [allVoters, setAllVoters] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const navigate = useNavigate();
 
   // Fetch all voters when component mounts
   useEffect(() => {
@@ -23,8 +27,8 @@ const EditVoter = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:5000/api/voters', {
-        headers: { Authorization: token },
+      const response = await axios.get('/api/voters', {
+        headers: { Authorization: `Bearer ${token}` },
       });
       setAllVoters(response.data);
       setLoading(false);
@@ -46,6 +50,8 @@ const EditVoter = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
+    setLoading(true);
 
     try {
       const token = localStorage.getItem('token');
@@ -57,6 +63,7 @@ const EditVoter = () => {
 
       if (!matchedVoter) {
         setError('No voter found with the given CNIC and Voter ID.');
+        setLoading(false);
         return;
       }
 
@@ -74,20 +81,21 @@ const EditVoter = () => {
       // Check if any fields were actually updated
       if (Object.keys(updatePayload).length <= 2) {
         setError('Please fill at least one field to update.');
+        setLoading(false);
         return;
       }
 
       // Proceed with update using matched voter's ID
       await axios.put(
-        `http://localhost:5000/api/voters/${matchedVoter._id}`,
+        `/api/voters/${matchedVoter._id}`,
         updatePayload,
         {
-          headers: { Authorization: token },
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
 
       // Refresh the voters list after update
-      fetchAllVoters();
+      await fetchAllVoters();
       
       // Reset form
       setForm({
@@ -98,14 +106,16 @@ const EditVoter = () => {
         city: ''
       });
 
-      alert('Voter updated successfully!');
+      setSuccess('Voter updated successfully!');
     } catch (err) {
       console.error('Error updating voter:', err);
       if (err.response) {
-        setError(`Error: ${err.response.data.message || 'Failed to update voter.'}`);
+        setError(err.response.data.message || 'Failed to update voter. Please try again.');
       } else {
         setError('Network error or server not responding.');
       }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -117,138 +127,278 @@ const EditVoter = () => {
       phone: voter.phone || '',
       city: voter.city || ''
     });
-    
-    // Scroll to top for better UX
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
-    <div className="bg-blue-50 text-black min-h-screen py-10 px-6 relative">
-      <div className="absolute top-4 left-4">
-        <img src="/src/assets/evm-logo.png" alt="Logo" className="w-12 h-auto" />
-      </div>
-
-      <div className="text-center mb-4 mt-4">
-        <h1 className="text-4xl font-extrabold text-blue-900">Pak Raaz</h1>
-      </div>
-
-      <div className="border border-blue-600 rounded-xl p-8 max-w-4xl mx-auto shadow-md mb-8">
-        <h2 className="text-2xl font-bold text-center text-blue-700 mb-6">Edit Voter Information</h2>
-
-        {/* Display error message */}
-        {error && (
-          <div className="text-red-600 text-center mb-4 p-2 bg-red-50 border border-red-200 rounded">
-            <p>{error}</p>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="flex flex-wrap gap-6 justify-between">
-          {/* Required fields for identification */}
-          <div className="w-full">
-            <h3 className="text-lg font-medium text-blue-800 mb-2">Identification (Required)</h3>
-            <div className="flex flex-wrap gap-4">
-              {['CNIC', 'voterID'].map((field) => (
-                <div key={field} className="flex-1 min-w-[250px]">
-                  <label htmlFor={field} className="block text-md font-medium text-black">
-                    {field === 'CNIC' ? 'CNIC' : 'Voter ID'}
-                  </label>
-                  <input
-                    id={field}
-                    name={field}
-                    type="text"
-                    value={form[field] || ''}
-                    onChange={handleChange}
-                    className="w-full p-3 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder={`Enter ${field}`}
-                    required
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Fields to update */}
-          <div className="w-full mt-4">
-            <h3 className="text-lg font-medium text-blue-800 mb-2">Fields to Update (Fill at least one)</h3>
-            <div className="flex flex-wrap gap-4">
-              {['name', 'phone', 'city'].map((field) => (
-                <div key={field} className="flex-1 min-w-[250px]">
-                  <label htmlFor={field} className="block text-md font-medium text-black">
-                    {field === 'name' ? 'Full Name' :
-                    field === 'phone' ? 'Phone Number' : 'City'}
-                  </label>
-                  <input
-                    id={field}
-                    name={field}
-                    type="text"
-                    value={form[field] || ''}
-                    onChange={handleChange}
-                    className="w-full p-3 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder={`Enter ${field}`}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="w-full mt-4">
-            <button
-              type="submit"
-              className="w-full py-3 bg-blue-700 text-white font-bold rounded-md shadow-md hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              Update Voter
-            </button>
-          </div>
-        </form>
-      </div>
-
-      {/* Voters List Section */}
-      <div className="border border-blue-600 rounded-xl p-8 max-w-6xl mx-auto shadow-md">
-        <h2 className="text-2xl font-bold text-center text-blue-700 mb-6">All Registered Voters</h2>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-6">
+      {/* Premium Header */}
+      <div className="w-full flex items-center justify-between mb-8 bg-white rounded-xl shadow-lg p-4 border border-gray-200">
+        <div className="flex items-center">
+          <img
+            src="/src/assets/evm-logo.png"
+            alt="Logo"
+            className="w-12 h-12 mr-3"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLXZvdGUiPjxwYXRoIGQ9Ik0yMCAxNHYyYTIgMiAwIDAgMSAyIDJIMyI+PC9wYXRoPjxwYXRoIGQ9Ik0yMCAxNGgtNmEyIDIgMCAwIDEtMi0yVjNhMiAyIDAgMCAxIDItMmgxLjI3YTIgMiAwIDAgMSAxLjk0IDEuNUw0Mi51MSIgLz48L3N2Zz4=';
+            }}
+          />
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+            Election Commission Portal
+          </h1>
+        </div>
         
-        {loading ? (
-          <div className="text-center p-4">
-            <p className="text-blue-700">Loading voters...</p>
+        <div className="flex space-x-3">
+          <button 
+            onClick={() => navigate('/commission-dashboard')}
+            className="flex items-center space-x-2 bg-gradient-to-r from-green-500 to-green-600 text-white px-4 py-2 rounded-lg hover:from-green-600 hover:to-green-700 transition-all shadow-sm"
+          >
+            <FaHome className="text-sm" />
+            <span>Dashboard</span>
+          </button>
+          <button 
+            onClick={() => navigate('/')}
+            className="flex items-center space-x-2 bg-gradient-to-r from-gray-700 to-gray-900 text-white px-4 py-2 rounded-lg hover:from-gray-800 hover:to-black transition-all shadow-sm"
+          >
+            <FaSignOutAlt className="text-sm" />
+            <span>Logout</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-6xl mx-auto">
+        {/* Form Section */}
+        <div className="bg-white rounded-xl shadow-xl overflow-hidden border border-gray-200 mb-8">
+          {/* Title Section */}
+          <div className="bg-gradient-to-r from-green-600 to-blue-600 p-6">
+            <div className="flex items-center justify-center">
+              <FaUserEdit className="text-white text-3xl mr-3" />
+              <h2 className="text-2xl font-bold text-white">Edit Voter Information</h2>
+            </div>
           </div>
-        ) : allVoters.length === 0 ? (
-          <div className="text-center p-4">
-            <p className="text-gray-700">No voters found in the system.</p>
+
+          {/* Form Content */}
+          <div className="p-8">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* CNIC Field */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    CNIC (13 digits) *
+                  </label>
+                  <div className="relative">
+                    <FaIdCard className="absolute left-3 top-3.5 text-gray-400" />
+                    <input
+                      type="text"
+                      name="CNIC"
+                      value={form.CNIC}
+                      onChange={handleChange}
+                      maxLength="13"
+                      pattern="\d{13}"
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 shadow-sm"
+                      placeholder="Enter 13-digit CNIC"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Voter ID Field */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Voter ID *
+                  </label>
+                  <div className="relative">
+                    <FaIdCard className="absolute left-3 top-3.5 text-gray-400" />
+                    <input
+                      type="text"
+                      name="voterID"
+                      value={form.voterID}
+                      onChange={handleChange}
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 shadow-sm"
+                      placeholder="Enter voter ID"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Name Field */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Full Name
+                  </label>
+                  <div className="relative">
+                    <FaUser className="absolute left-3 top-3.5 text-gray-400" />
+                    <input
+                      type="text"
+                      name="name"
+                      value={form.name}
+                      onChange={handleChange}
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 shadow-sm"
+                      placeholder="Enter full name"
+                    />
+                  </div>
+                </div>
+
+                {/* Phone Field */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Phone Number
+                  </label>
+                  <div className="relative">
+                    <FaPhone className="absolute left-3 top-3.5 text-gray-400" />
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={form.phone}
+                      onChange={handleChange}
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 shadow-sm"
+                      placeholder="Enter phone number"
+                    />
+                  </div>
+                </div>
+
+                {/* City Field */}
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    City
+                  </label>
+                  <div className="relative">
+                    <FaCity className="absolute left-3 top-3.5 text-gray-400" />
+                    <input
+                      type="text"
+                      name="city"
+                      value={form.city}
+                      onChange={handleChange}
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 shadow-sm"
+                      placeholder="Enter city"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Messages */}
+              <div className="mt-2">
+                {error && (
+                  <div className="bg-red-50 border-l-4 border-red-500 p-4">
+                    <div className="flex">
+                      <div className="flex-shrink-0">
+                        <svg className="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <div className="ml-3">
+                        <p className="text-sm text-red-700">{error}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {success && (
+                  <div className="bg-green-50 border-l-4 border-green-500 p-4">
+                    <div className="flex">
+                      <div className="flex-shrink-0">
+                        <svg className="h-5 w-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <div className="ml-3">
+                        <p className="text-sm text-green-700">{success}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+              {/* CNIC and Voter ID Notice */}
+<div>
+  <div className="bg-red-50 border-l-4 border-red-600 p-4 animate-pulse shadow-lg rounded-md">
+    <div className="flex items-center">
+      <div className="flex-shrink-0">
+        <svg className="h-6 w-6 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3a1 1 0 001 1h2a1 1 0 100-2h-1V7z" clipRule="evenodd" />
+        </svg>
+      </div>
+      <div className="ml-3">
+        <h3 className="text-lg text-red-800 font-bold uppercase tracking-wide">CNIC and Voter ID cannot be changed!</h3>
+      </div>
+    </div>
+  </div>
+</div>
+
+              <div className="pt-4">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full flex justify-center items-center space-x-2 bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-4 rounded-xl hover:from-green-700 hover:to-green-800 transition-all shadow-lg hover:shadow-xl disabled:opacity-70"
+                >
+                  <FaUserEdit className="text-xl" />
+                  <span className="font-semibold">
+                    {loading ? 'Updating Voter...' : 'Update Voter'}
+                  </span>
+                </button>
+              </div>
+            </form>
           </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full bg-white border border-gray-300 shadow-sm rounded-md">
-              <thead className="bg-blue-100">
-                <tr>
-                  <th className="py-3 px-4 text-left text-blue-800">CNIC</th>
-                  <th className="py-3 px-4 text-left text-blue-800">Voter ID</th>
-                  <th className="py-3 px-4 text-left text-blue-800">Name</th>
-                  <th className="py-3 px-4 text-left text-blue-800">Phone</th>
-                  <th className="py-3 px-4 text-left text-blue-800">City</th>
-                  <th className="py-3 px-4 text-left text-blue-800">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {allVoters.map((voter, index) => (
-                  <tr key={voter._id} className={index % 2 === 0 ? 'bg-white' : 'bg-blue-50'}>
-                    <td className="py-2 px-4 border-t">{voter.CNIC}</td>
-                    <td className="py-2 px-4 border-t">{voter.voterID}</td>
-                    <td className="py-2 px-4 border-t">{voter.name}</td>
-                    <td className="py-2 px-4 border-t">{voter.phone}</td>
-                    <td className="py-2 px-4 border-t">{voter.city}</td>
-                    <td className="py-2 px-4 border-t">
-                      <button
-                        onClick={() => handleFillForm(voter)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white py-1 px-3 rounded text-sm"
-                      >
-                        Edit
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        </div>
+
+        {/* Voters List Section */}
+        <div className="bg-white rounded-xl shadow-xl overflow-hidden border border-gray-200">
+          {/* Title Section */}
+          <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-6">
+            <div className="flex items-center justify-center">
+              <FaSearch className="text-white text-3xl mr-3" />
+              <h2 className="text-2xl font-bold text-white">All Registered Voters</h2>
+            </div>
           </div>
-        )}
+
+          {/* Table Section */}
+          <div className="p-6">
+            {loading ? (
+              <div className="text-center p-8">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600"></div>
+                <p className="mt-2 text-blue-700">Loading voters...</p>
+              </div>
+            ) : allVoters.length === 0 ? (
+              <div className="text-center p-8">
+                <p className="text-gray-600">No voters found in the system.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CNIC</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Voter ID</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">City</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {allVoters.map((voter) => (
+                      <tr key={voter._id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{voter.CNIC}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{voter.voterID}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{voter.name}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{voter.phone}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{voter.city}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          <button
+                            onClick={() => handleFillForm(voter)}
+                            className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                          >
+                            <FaUserEdit className="mr-1" /> Fill Form
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
