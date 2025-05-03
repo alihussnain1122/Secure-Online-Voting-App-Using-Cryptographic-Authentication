@@ -67,7 +67,7 @@ const AddAdmin = () => {
             className="w-12 h-12 mr-3"
           />
           <h1 className="text-2xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-            Election Commission Portal
+            Online Voting App
           </h1>
         </div>
 
