@@ -91,7 +91,7 @@ const VoterDashboard = () => {
           />
         </div>
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-green-800">PakRaaz Voter Portal</h1>
+          <h1 className="text-2xl font-bold text-green-800">PakRaaz Voting App</h1>
         </div>
         <div className="absolute right-4 top-4">
           <button

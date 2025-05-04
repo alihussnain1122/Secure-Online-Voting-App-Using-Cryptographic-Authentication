@@ -341,7 +341,7 @@ const ThankYou = () => {
           <img src="/src/assets/evm-logo.png" alt="EVM Logo" className="w-12 h-12" />
         </div>
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-green-800">PakRaaz Voter Portal</h1>
+          <h1 className="text-2xl font-bold text-green-800">PakRaaz Voting App</h1>
         </div>
       </div>
 
