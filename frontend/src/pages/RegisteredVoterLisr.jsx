@@ -32,6 +32,11 @@ const RegisteredVoterList = () => {
   }, []);
 
   const generatePDF = () => {
+    if (voters.length === 0) {
+      alert('No voter data available to generate PDF');
+      return;
+    }
+
     const doc = new jsPDF();
     
     // Header
@@ -46,9 +51,9 @@ const RegisteredVoterList = () => {
     
     // Table data
     const tableData = voters.map(voter => [
-      voter.CNIC,
-      voter.voterID,
-      voter.name,
+      voter.CNIC || 'N/A',
+      voter.voterID || 'N/A',
+      voter.name || 'N/A',
       voter.phone || 'N/A',
       voter.city || 'N/A'
     ]);
@@ -105,7 +110,6 @@ const RegisteredVoterList = () => {
           </button>
         </div>
       </div>
-
 
       {/* Main Content */}
       <div className="max-w-6xl mx-auto bg-white rounded-xl shadow-md overflow-hidden border border-gray-200">

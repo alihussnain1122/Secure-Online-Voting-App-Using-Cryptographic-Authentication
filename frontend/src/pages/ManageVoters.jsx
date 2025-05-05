@@ -142,13 +142,13 @@ const ManageVoters = () => {
           <div className="flex flex-col md:flex-row justify-between items-center">
             <h2 className="text-2xl font-bold text-white">Voter Management</h2>
             <div className="mt-2 md:mt-0">
-              <button
+               <button
                 onClick={handleDownloadPDF}
                 className="flex items-center space-x-2 bg-white text-green-700 px-4 py-2 rounded-lg hover:bg-gray-100 shadow-md transition-all"
               >
                 <FaFilePdf />
                 <span>Export as PDF</span>
-              </button>
+              </button> 
             </div>
           </div>
         </div>

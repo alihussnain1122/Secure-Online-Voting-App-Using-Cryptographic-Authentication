@@ -139,13 +139,13 @@ const ManageCandidates = () => {
               <FaUserTie className="text-white text-3xl mr-3" />
               <h2 className="text-2xl font-bold text-white">Candidate Management</h2>
             </div>
-            <button
+             <button
               onClick={handleDownloadPDF}
               className="flex items-center space-x-2 bg-white text-green-700 px-4 py-2 rounded-lg hover:bg-gray-100 shadow-md transition-all"
             >
               <FaFilePdf />
               <span>Export Report</span>
-            </button>
+            </button> 
           </div>
         </div>
         
