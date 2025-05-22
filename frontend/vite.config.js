@@ -8,7 +8,7 @@ export default defineConfig({
     react()],
   server: {
     proxy: {
-        '/api': 'http://localhost:5000' //backend api 
+        '/api': 'https://pakraaz.onrender.com' //backend api 
       }
     }
 })
